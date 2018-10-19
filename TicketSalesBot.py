@@ -16,26 +16,32 @@ args = vars(parser.parse_args())
 
 ST_USER = args['stuser']
 ST_SECRET = args['stsecret']
-ST_EVENTS = args['stevents']
+ST_EVENTS = args['stevents'].split(',')
 SLACK_TOKEN = args['slacktoken']
+ST_VERSION = "1"
+ST_CASH = "1"
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
 COMMAND = "!sales"
 
 slack_client = SlackClient(SLACK_TOKEN)
 
 def getAPIResponse(event):
-    version = "1"
-    cash = "1"
-    hash_string = ":".join([version,ST_USER,event,cash,ST_SECRET])
+    hash_string = ":".join([ST_VERSION,ST_USER,event,ST_CASH,ST_SECRET])
     sha = hashlib.sha256(hash_string.encode('utf-8')).hexdigest()
 
-    r = requests.post("https://studentersamfundet.safeticket.dk/api/stats/" + event, data={'version': version, 'user': ST_USER, 'event': event, 'cash': cash, 'sha': sha})
-
-    return r.text
+    try:
+        r = requests.post("https://studentersamfundet.safeticket.dk/api/stats/" + event, data={'version': ST_VERSION, 'user': ST_USER, 'event': event, 'cash': ST_CASH, 'sha': sha})
+        return r.text
+    except Exception as e:
+        print("type error: " + str(e))
 
 def parseTicketsSold(response):
     ticketsSold = 0
-    tree = ET.ElementTree(ET.fromstring(response))
+    try:
+        tree = ET.ElementTree(ET.fromstring(response))
+    except Exception as e:
+        print("type error: " + str(e))
+        return ticketsSold
     root = tree.getroot()
     tickets = root.find('tickets')
     refunded = root.find('refunded')
@@ -47,7 +53,6 @@ def parseTicketsSold(response):
     return ticketsSold
 
 def totalSold(events):
-    events = events.split(',')
     totalSold = 0
 
     for event in events:
