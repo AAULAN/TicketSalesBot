@@ -83,7 +83,7 @@ def handle_command(slack_events):
 
 oldepoch = 0
 oldTicketsSold = totalSold(ST_EVENTS)
-if slack_client.rtm_connect(with_team_state=False):
+if slack_client.rtm_connect(with_team_state=False, auto_reconnect=True):
     print("Bot connected and running!")
 
     while True:
